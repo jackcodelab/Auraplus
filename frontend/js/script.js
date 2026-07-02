@@ -1,3 +1,6 @@
+// ONE-WORD/ONE-LINE CONFIGURATION: Change this URL to switch between environments
+const API_URL = "http://localhost:3000";
+
 lucide.createIcons();
 
 // Elements Selectors
@@ -99,6 +102,88 @@ function createCardElement(post) {
 
     return card;
 }
+// A. Network handler for managing post like/unlike states
+async function handleLikeAction(postId, cardElement) {
+    const loggedInUser = localStorage.getItem('loggedInUser') || 'Anonymous';
+
+    try {
+        const response = await fetch(`${API_URL}/api/posts/${postId}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: loggedInUser })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update the UI metrics directly using the returned array from your backend database
+            const likesArray = result.likes || [];
+            const likeCounterText = cardElement.querySelector('.like-counter-text');
+            likeCounterText.innerText = `${likesArray.length} likes`;
+
+            // Toggle heart icon colors on the screen based on whether you are in the likes array
+            const likeBtnIcon = cardElement.querySelector('.like-trigger i');
+            const isLikedByMe = likesArray.includes(loggedInUser);
+
+            if (isLikedByMe) {
+                likeBtnIcon.style.color = 'red';
+                likeBtnIcon.setAttribute('fill', 'red');
+            } else {
+                likeBtnIcon.style.color = 'currentColor';
+                likeBtnIcon.setAttribute('fill', 'none');
+            }
+        }
+    } catch (error) {
+        console.error("Failed to update like status on the server:", error);
+    }
+}
+
+// B. Network handler for posting and appending live text comments
+async function handleCommentAction(postId, commentInput, displayZone) {
+    const commentText = commentInput.value.trim();
+    if (!commentText) return; // Prevent uploading empty comments
+
+    const loggedInUser = localStorage.getItem('loggedInUser') || 'Anonymous';
+
+    try {
+        const response = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: loggedInUser,
+                text: commentText
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Clear out the user input text field upon success
+            commentInput.value = '';
+
+            // Generate HTML template block for the newly created comment element
+            const newCommentHTML = `
+                <div style="margin-bottom: 6px; font-size: 13px; font-family: system-ui, sans-serif; line-height: 1.4;">
+                    <strong style="font-weight: 700; color: #262626; margin-right: 6px;">${loggedInUser}</strong>
+                    <span style="color: #4a4a4a;">${commentText}</span>
+                </div>
+            `;
+
+            // Append the new message snippet straight to the bottom of the card display area
+            displayZone.insertAdjacentHTML('beforeend', newCommentHTML);
+
+            // Auto scroll down to the bottom of the comment zone to see the newest text instantly
+            displayZone.scrollTop = displayZone.scrollHeight;
+        }
+    } catch (error) {
+        console.error("Failed to post comment to the server:", error);
+    }
+}
+
 // 1. Initial Load: Auto Check Login Token Session + Load Posts Feed
 window.addEventListener('DOMContentLoaded', async () => {
     // PERSISTENT LOGIN REFRESH CHECK: If username token is already cached, bypass login screens automatically!
@@ -110,7 +195,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const response = await fetch('http://localhost:3000/api/posts');
+        // Uses global configuration URL variable dynamically
+        const response = await fetch(`${API_URL}/api/posts`);
         const posts = await response.json();
         posts.forEach(post => {
             const cardElement = createCardElement(post);
@@ -121,7 +207,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         console.error("Error connecting to server:", error);
     }
 });
-
 // 2. Open Creator Modal
 uploadBtn.addEventListener('click', () => {
     uploadModal.style.display = 'flex';
@@ -146,6 +231,7 @@ fileSelector.addEventListener('change', (event) => {
         fileReader.readAsDataURL(selectedFile);
     }
 });
+
 // 5. Send Upload Data Packages over Network Fetch Channels
 submitPostBtn.addEventListener('click', async () => {
     const file = fileSelector.files[0];
@@ -168,7 +254,8 @@ submitPostBtn.addEventListener('click', async () => {
         submitPostBtn.innerText = "Sharing...";
         submitPostBtn.disabled = true;
 
-        const response = await fetch('http://localhost:3000/api/posts', {
+        // Uses global configuration URL variable dynamically
+        const response = await fetch(`${API_URL}/api/posts`, {
             method: 'POST',
             body: formData
         });
@@ -182,88 +269,21 @@ submitPostBtn.addEventListener('click', async () => {
             closeModalBtn.click();
         }
     } catch (error) {
-        alert("Upload failed. Make sure your server terminal is running node server.js!");
+        alert("Upload failed. Make sure your server terminal is running and accessible!");
         console.error(error);
     } finally {
+        // Reset the interface fields back to baseline states
         submitPostBtn.innerText = "Share Post";
         submitPostBtn.disabled = false;
+        postTitle.value = '';
+        postDescription.value = '';
+        fileSelector.value = '';
+        imagePreview.style.display = 'none';
+        previewPlaceholder.style.display = 'block';
     }
 });
 
-// 6. Network Post Actions Link Handling Logic Controller (Likes)
-async function handleLikeAction(postId, cardNode) {
-    const activeUsername = localStorage.getItem('loggedInUser') || 'Anonymous';
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/${postId}/like`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: activeUsername })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            const counterText = cardNode.querySelector('.like-counter-text');
-            const heartIconBtn = cardNode.querySelector('.like-trigger');
-
-            counterText.innerText = `${data.likes.length} likes`;
-
-            if (data.likes.includes(activeUsername)) {
-                heartIconBtn.style.color = 'red';
-                heartIconBtn.innerHTML = '<i data-lucide="heart" fill="red"></i>';
-            } else {
-                heartIconBtn.style.color = 'currentColor';
-                heartIconBtn.innerHTML = '<i data-lucide="heart" fill="none"></i>';
-            }
-            lucide.createIcons();
-        }
-    } catch (err) {
-        console.error("Like transmission fault connection:", err);
-    }
-}
-
-// 7. Transmit New Comment Package over the Network Line
-async function handleCommentAction(postId, inputElement, displayZoneNode) {
-    const text = inputElement.value.trim();
-    if (!text) return;
-
-    const activeUsername = localStorage.getItem('loggedInUser') || 'Anonymous';
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/posts/${postId}/comment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: activeUsername, text: text })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            const newCommentHTML = `
-                <div style="margin-bottom: 6px; font-size: 13px; font-family: system-ui, sans-serif; line-height: 1.4;">
-                    <strong style="font-weight: 700; color: #262626; margin-right: 6px;">${activeUsername}</strong>
-                    <span style="color: #4a4a4a;">${text}</span>
-                </div>
-            `;
-
-            displayZoneNode.innerHTML += newCommentHTML;
-            inputElement.value = '';
-            displayZoneNode.scrollTop = displayZoneNode.scrollHeight;
-        }
-    } catch (err) {
-        console.error("Comment transmission pipeline fault error:", err);
-    }
-}
-
-// 8. Modal Cleanup Resets Close Actions
+// 6. Close Modal Layer Panel Interface
 closeModalBtn.addEventListener('click', () => {
     uploadModal.style.display = 'none';
-    fileSelector.value = '';
-    imagePreview.style.display = 'none';
-    imagePreview.src = '';
-    previewPlaceholder.style.display = 'flex';
-    postTitle.value = '';
-    postDescription.value = '';
-    currentImageSrc = '';
 });
