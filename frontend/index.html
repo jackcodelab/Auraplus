@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura+</title>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="./css/auth.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+
+    <!-- Full-Screen Auth Overlay -->
+    <div id="authModal" class="auth-overlay">
+        <div class="auth-box">
+            <h1 class="auth-logo">Aura+</h1>
+
+            <!-- Login Form Grid Container -->
+            <form id="authForm" class="auth-form-zone">
+                <div class="auth-inputs">
+                    <input type="text" id="authUsername" placeholder="Username" required autocomplete="username">
+                    <input type="email" id="authEmail" placeholder="Email address" style="display: none;" autocomplete="email">
+                    <input type="password" id="authPassword" placeholder="Password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" id="authSubmitBtn">Log In</button>
+            </form>
+
+            <!-- Toggle link to switch states -->
+            <div class="auth-toggle-footer">
+                <p id="authToggleText">Don't have an account? <span id="authToggleAction">Sign up</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side bar Navigation Layout -->
+    <aside>
+        <div class="btn"><i data-lucide="home"></i></div>
+        <div class="btn"><i data-lucide="search"></i></div>
+        <div class="btn"><i data-lucide="heart"></i></div>
+
+        <!-- Cleaned upload icon button (The duplicate input box tag has been removed from inside here) -->
+        <div class="btn" id="uploadBtn">
+            <i data-lucide="plus-square"></i>
+        </div>
+
+        <div class="btn btn-settings"><i data-lucide="settings"></i></div>
+    </aside>
+
+    <!-- Scrollable Feed Container Window Panel Area -->
+    <main></main>
+
+    <!-- The Popup Modal Wrapper Creator Board Dashboard -->
+    <div id="uploadModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Create new post</h3>
+                <button id="closeModalBtn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Left side: Image Viewport Preview & Select Button -->
+                <div class="modal-preview-zone">
+                    <img id="imagePreview" src="" alt="Preview" style="display: none;">
+
+                    <div id="previewPlaceholder" class="preview-cta">
+                        <i data-lucide="image" class="placeholder-icon"></i>
+                        <p>Select photos here</p>
+                        <button id="modalSelectFileBtn">Select from computer</button>
+                    </div>
+                </div>
+
+                <!-- Right side: Content Inputs Forms Fields -->
+                <div class="modal-form-zone">
+                    <div class="input-fields">
+                        <input type="text" id="postTitle" placeholder="Add a title...">
+                        <textarea id="postDescription" placeholder="Write a description..."></textarea>
+                    </div>
+                    <button id="submitPostBtn">Share Post</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The ONE single isolated system hidden file input element -->
+    <input type="file" id="fileSelector" accept="image/*" style="display: none;">
+
+    <!-- Corrected Case-Sensitive "Js" Path References (Matches your real system folder layout) -->
+    <script src="./js/script.js"></script>
+    <script src="./js/auth.js"></script>
+</body>
+
+</html>
